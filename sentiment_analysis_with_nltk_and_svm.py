@@ -3,14 +3,15 @@ from tensorflow import keras
 import nltk
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 from sklearn.metrics import accuracy_score
 from nltk.corpus import stopwords
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 (x_train, y_train), (x_test, y_test) = keras.datasets.imdb.load_data(path=r'imdb.npz', seed=42)
 word_index = keras.datasets.imdb.get_word_index(path=r"imbd_word_index.json")
+
 
 class Sentiment:
 
@@ -65,69 +66,40 @@ class Sentiment:
         else:
             print("Wrong value for arg3")
 
-    def stopping_words(self, arg, arg2, arg3='choose'):
-        if arg3=='train':
-            self.x_train_removed_stop_words = []
-            eng_stop_words = stopwords.words('english')
-            for sentence in arg:
-                self.x_train_removed_stop_words.append(' '.join([w for w in str(sentence).split() if w not in eng_stop_words]))
-            lengths = [len(i) for i in self.x_train_removed_stop_words]
-            avg =(float(sum(lengths)) / len(lengths))
-            print("\n\nAfter removing most common english words, the average length of a sentense is {},\nwhile the longest one has {} characters.".format(np.round(avg, 0), max(lengths)))
-            if arg2==True:
-                return(self.x_train_removed_stop_words)
-        elif arg3=='test':
-            self.x_test_removed_stop_words = []
-            eng_stop_words = stopwords.words('english')
-            for sentence in arg:
-                self.x_test_removed_stop_words.append(' '.join([w for w in str(sentence).split() if w not in eng_stop_words]))
-            lengths = [len(i) for i in self.x_test_removed_stop_words]
-            avg =(float(sum(lengths)) / len(lengths))
-            print("\n\nAfter removing most common english words, the average length of a sentense is {},\nwhile the longest one has {} characters.".format(np.round(avg, 0), max(lengths)))
-            if arg2==True:
-                return(self.x_test_removed_stop_words)
-
-    def n_gram_vect(self):
+    def tf_idf(self):
         print("\nData preparing...")
-        self.vectorizer = CountVectorizer(binary=True, ngram_range=(1, 2))
-        self.vectorizer.fit(self.x_train_removed_stop_words)
-        self.X_train = self.vectorizer.transform(self.x_train_removed_stop_words)
-        self.X_test = self.vectorizer.transform(self.x_test_removed_stop_words)
+        self.tfidf = TfidfVectorizer(binary=False, ngram_range=(1, 3), stop_words=stopwords.words('english'))
+        self.tfidf.fit(self.x_train_dict)
+        self.X_train = self.tfidf.transform(self.x_train_dict)
+        self.X_test = self.tfidf.transform(self.x_test_dict)
 
-    def LogReg(self):
+    def classifier(self):
         print("\nTraining...")
-        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size = 0.2)
-        self.logreg = LogisticRegression()
-        self.logreg.fit(self.X_train, self.y_train)
-        print("\n\nThe accuracy score is equal to {}".format(accuracy_score(self.y_val, self.logreg.predict(self.X_val))))
-        return(self.logreg)
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_train, self.y_train, test_size = 0.15)
+        self.svm = LinearSVC()
+        self.svm.fit(self.X_train, self.y_train)
+        print("\nThe accuracy score is equal to {}".format(accuracy_score(self.y_val, self.svm.predict(self.X_val))))
+        return(self.svm)
 
     def my_insert(self):
         sample = input("\n\nWrite a sentence: ")
         sample = str(sample)
         sample = [sample]
-        self.my_sample = self.vectorizer.transform(sample)
-        prediction = self.logreg.predict(self.my_sample)
+        self.my_sample = self.tfidf.transform(sample)
+        prediction = self.svm.predict(self.my_sample)
         if prediction==1:
             print("\nSample is positive")
         else:
             print("\nSample is negative")
-        question = input("\n\nDo you want to check new sample? y/n")
-        if question=='y':
-            self.my_insert()
-        else:
-            print("\n\nClose the app.")
+        self.my_insert()
 
 
 
 model = Sentiment(x_train, y_train, x_test, y_test, word_index)
 model.reverse_indexing(model.word_index)
 model.dictionary_check(model.x_train, model.reverse_word_index)
-#data_set.sentence_generator(data_set.x_train[100], False)
 model.train_test_dict(model.x_train, False, 'train')
 model.train_test_dict(model.x_test, False, 'test')
-model.stopping_words(model.x_train_dict, False, 'train')
-model.stopping_words(model.x_test_dict, False, 'test')
-model.n_gram_vect()
-model.LogReg()
+model.tf_idf()
+model.classifier()
 model.my_insert()
