@@ -1,4 +1,5 @@
 import tensorflow as tf
+import keras
 import pandas as pd
 import re
 from string import punctuation
@@ -11,8 +12,7 @@ from functools import reduce
 from nltk.stem import WordNetLemmatizer
 from sklearn.model_selection import train_test_split
 
-
-tweets = pd.read_csv(r"Tweets.csv", usecols=['tweet_id', 'airline_sentiment', 'text'])
+tweets = pd.read_csv(r"files\Tweets.csv", usecols=['tweet_id', 'airline_sentiment', 'text'])
 tweets = tweets[tweets.airline_sentiment != 'neutral']
 tweets.reset_index(inplace=True)
 
@@ -57,7 +57,7 @@ for review in reviews:
 
 list_of_words = reduce(lambda x,y: x+y, list_of_words)
 list_of_words = np.unique(list_of_words)
-
+len(list_of_words)
 dictio = {word: idx for (idx, word) in enumerate(list_of_words)}
 dictio_revers = dict((b, a) for (a, b) in dictio.items())
 
@@ -66,18 +66,19 @@ for review in reviews:
     encoded_reviews.append([dictio[word] for word in review.split()])
 
 seq_len = max_len_of_review
-reviews_with_padding = []
+reviews_with_padding = np.array(np.zeros(len(reviews)*seq_len))
+reviews_with_padding = reviews_with_padding.reshape(len(reviews), seq_len)
 
-for review in reviews:
+
+for idx, review in enumerate(reviews):
     length = len([word for word in review.split()])
     if length < seq_len:
         n = seq_len - length
         zero_padding = list(np.zeros(n))
         zero_padding = zero_padding + [dictio[word] for word in review.split()]
-        reviews_with_padding.append(zero_padding)
+        reviews_with_padding[idx] = zero_padding
     else:
-        reviews_with_padding.append(review)
-
+        reviews_with_padding[idx]= [dictio[word] for word in review.split()]
 
 
 reviews_with_padding = np.array(reviews_with_padding)
@@ -85,6 +86,45 @@ reviews_with_padding.shape
 len(labels)
 
 X_train, X_test, y_train, y_test = train_test_split(reviews_with_padding, np.array(labels), test_size=0.1)
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
 X_train.shape
 y_train.shape
+
+from keras.models import Sequential
+from keras.layers import LSTM, Dense, Dropout, Masking, Embedding
+
+
+model = Sequential()
+
+# Embedding layer
+model.add(Embedding(len(list_of_words), 4000))
+#model.add(keras.layers.GlobalMaxPooling1D())
+model.add(LSTM(256, return_sequences=True, dropout=0.3, recurrent_dropout=0.1))
+model.add(LSTM(128, return_sequences=False, dropout=0.3, recurrent_dropout=0.1))
+model.add(keras.layers.Dropout(0.3))
+model.add(Dense(64, activation='relu'))
+model.add(keras.layers.Dropout(0.3))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
+
+model.fit(X_train, y_train, batch_size=256, epochs=4, validation_data=(X_val, y_val), verbose=1)
+
+model.evaluate(X_test, y_test)
+
+inp = 'girl hate'
+inp = str(inp)
+len(inp.split())
+
+input_with_padding = np.array(np.zeros(seq_len))
+input_with_padding = input_with_padding.reshape(1, 26)
+input_length = len([word for word in inp.split()])
+if input_length < seq_len:
+    n = seq_len - input_length
+    zero_padding = list(np.zeros(n))
+    zero_padding = zero_padding + [dictio[word] for word in inp.split()]
+    input_with_padding[0] = zero_padding
+
+input_with_padding
+
+model.predict(input_with_padding)
