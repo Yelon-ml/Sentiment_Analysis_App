@@ -99,6 +99,7 @@ model = Sequential()
 # Embedding layer
 model.add(Embedding(len(list_of_words), 4000))
 #model.add(keras.layers.GlobalMaxPooling1D())
+model.add(LSTM(512, return_sequences=True, dropout=0.3, recurrent_dropout=0.1))
 model.add(LSTM(256, return_sequences=True, dropout=0.3, recurrent_dropout=0.1))
 model.add(LSTM(128, return_sequences=False, dropout=0.3, recurrent_dropout=0.1))
 model.add(keras.layers.Dropout(0.3))
@@ -108,23 +109,38 @@ model.add(Dense(32, activation='relu'))
 model.add(Dense(1, activation='sigmoid'))
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])
 
-model.fit(X_train, y_train, batch_size=256, epochs=4, validation_data=(X_val, y_val), verbose=1)
+model.fit(X_train, y_train, batch_size=512, epochs=4, validation_data=(X_val, y_val), verbose=1)
 
 model.evaluate(X_test, y_test)
 
-inp = 'girl hate'
-inp = str(inp)
-len(inp.split())
+own_input = input("please write a sentence")
+own_input = 'I have a@ girlfriend that I really love. she is the best.'
+own_input_splitted = own_input.split()
+
+own_input = [re.sub("@", "", word) for word in own_input_splitted]
+own_input = [word.lower() for word in own_input]
+
+own_input = [re.sub(r'[\W]', "", word) for word in own_input]
+own_input = [re.sub('virginamerica', "", word) for word in own_input]
+own_input = [re.sub('united', "", word) for word in own_input]
+own_input = [re.sub('americanair', "", word) for word in own_input]
+own_input
+
+own_input = ' '.join(word for word in own_input if word not in stopwords.words('english'))
+lemmatizer = WordNetLemmatizer()
+own_input = ''.join([lemmatizer.lemmatize(word) for word in own_input])
+own_input = list(own_input)
 
 input_with_padding = np.array(np.zeros(seq_len))
 input_with_padding = input_with_padding.reshape(1, 26)
-input_length = len([word for word in inp.split()])
+input_length = len([word for word in own_input.split()])
 if input_length < seq_len:
     n = seq_len - input_length
     zero_padding = list(np.zeros(n))
-    zero_padding = zero_padding + [dictio[word] for word in inp.split()]
+    zero_padding = zero_padding + [dictio[word] for word in own_input.split()]
     input_with_padding[0] = zero_padding
 
-input_with_padding
-
-model.predict(input_with_padding)
+if model.predict_classes(input_with_padding) == 1:
+    print("positive")
+else:
+    print("negative")
