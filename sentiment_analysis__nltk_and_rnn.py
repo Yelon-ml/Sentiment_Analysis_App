@@ -1,5 +1,4 @@
-import tensorflow as tf
-import keras
+
 import pandas as pd
 
 
@@ -123,89 +122,47 @@ data.length_distribution(data.reviews)
 data.text_padding(data.reviews)
 data.reviews_with_padding.shape
 data.train_val_test_split(data.reviews_with_padding, data.labels, test_size=0.05, val_size=0.15)
-data.reviews_with_padding[:10]
 
+class network:
 
+    import tensorflow as tf
+    import keras
 
-from sklearn.metrics import accuracy_score
+    def __init__(self, x_train, y_train, list_of_words):
 
+        self.x = x_train
+        self.y = y_train
+        self.list = list_of_words
 
+        tf.keras.backend.clear_session()
 
+        self.inputs = keras.Input(shape=(self.x.shape[1],), name='input_layer')
+        self.embedding = keras.layers.Embedding(len(self.list), 2000)(self.inputs)
+        self.gru_1 = keras.layers.GRU(256, return_sequences=True, dropout=0.2, recurrent_dropout=0.1)(self.embedding)
+        self.gru_2 = keras.layers.GRU(128, return_sequences=False, dropout=0.2, recurrent_dropout=0.1)(self.gru_1)
+        self.drop_1 = keras.layers.Dropout(0.4)(self.gru_2)
+        self.dense_1 = keras.layers.Dense(64, activation='elu')(self.drop_1)
+        self.drop_2 = keras.layers.Dropout(0.5)(self.dense_1)
+        self.dense_2 = keras.layers.Dense(32, activation='elu')(self.drop_2)
+        self.drop_3 = keras.layers.Dropout(0.5)(self.dense_2)
+        self.dense_3 = keras.layers.Dense(16, activation='elu')(self.drop_3)
+        self.drop_4 = keras.layers.Dropout(0.4)(self.dense_3)
+        self.outputs = keras.layers.Dense(1, activation='sigmoid')(self.drop_4)
 
+        self.model_with_gru = keras.Model(inputs=self.inputs, outputs=self.outputs, name="sentiment_with_gru")
 
-import datetime
+        self.model_with_gru.compile(optimizer='RMSProp', loss='binary_crossentropy', metrics=['acc'])
 
-def gru_training():
-    print("Creating model...")
-    inputs = keras.Input(shape=(26,), name='input_layer')
-    print(inputs.shape)
-    embedding = keras.layers.Embedding(len(list_of_words), 2000)(inputs)
-    print(embedding.shape)
-    gru_1 = keras.layers.GRU(256, return_sequences=True, dropout=0.2, recurrent_dropout=0.1)(embedding)
-    gru_2 = keras.layers.GRU(128, return_sequences=False, dropout=0.2, recurrent_dropout=0.1)(gru_1)
-    drop_1 = keras.layers.Dropout(0.4)(gru_2)
-    dense_1 = keras.layers.Dense(64, activation='elu')(drop_1)
-    drop_2 = keras.layers.Dropout(0.4)(dense_1)
-    dense_2 = keras.layers.Dense(32, activation='elu')(drop_2)
-    drop_3 = keras.layers.Dropout(0.4)(dense_2)
-    dense_3 = keras.layers.Dense(16, activation='elu')(drop_3)
-    drop_4 = keras.layers.Dropout(0.4)(dense_3)
-    outputs = keras.layers.Dense(1, activation='sigmoid')(drop_4)
+    def train(self, x_val, y_val, batch_size, epochs):
+        print("Start training...")
+        start_time = datetime.datetime.now()
+        self.model_with_gru.fit(self.x, self.y, batch_size=batch_size, epochs=epochs, validation_data=(x_val, y_val), verbose=2)
+        time = datetime.datetime.now() - start_time
+        print("\nTraining took {}.".format(time))
 
-    model_with_gru = keras.Model(inputs=inputs, outputs=outputs, name="sentiment_by_gru")
-    return model_with_gru
+    def evaluate(self, x_test, y_test):
+        self.model_with_gru.evaluate(x_test, y_test)
 
-tf.keras.backend.clear_session()
-
-gru_training()
-
-model_with_gru
-
-model_with_gru.compile(optimizer='RMSProp', loss='binary_crossentropy', metrics=['acc'])
-print("\nStart training...")
-start_time = datetime.datetime.now()
-model_with_gru.fit(X_train, y_train, batch_size=256, epochs=5, validation_data=(X_val, y_val), verbose=2)
-time = datetime.datetime.now() - start_time
-print("\nTraining took {} seconds.".format(time))
-return model_with_gru
-
-
-
-
-model_with_gru.evaluate(X_test, y_test)
-
-def inser_own_input():
-
-    own_input = input("please write a sentence: ")
-    own_input_splitted = own_input.split()
-
-    own_input = [re.sub("@", "", word) for word in own_input_splitted]
-    own_input = [word.lower() for word in own_input]
-
-    own_input = [re.sub(r'[\W]', "", word) for word in own_input]
-    own_input = [re.sub('virginamerica', "", word) for word in own_input]
-    own_input = [re.sub('united', "", word) for word in own_input]
-    own_input = [re.sub('americanair', "", word) for word in own_input]
-    own_input
-
-    own_input = ' '.join(word for word in own_input if word not in stopwords.words('english'))
-    lemmatizer = WordNetLemmatizer()
-    own_input = ''.join([lemmatizer.lemmatize(word) for word in own_input])
-    #own_input = list(own_input)
-
-    input_with_padding = np.array(np.zeros(seq_len))
-    input_with_padding = input_with_padding.reshape(1, 26)
-    input_length = len([word for word in own_input.split()])
-    if input_length < seq_len:
-        n = seq_len - input_length
-        zero_padding = list(np.zeros(n))
-        zero_padding = zero_padding + [dictio[word] for word in own_input.split()]
-        input_with_padding[0] = zero_padding
-    print(model.predict(input_with_padding))
-
-    if model.predict_classes(input_with_padding) == 1:
-        print("positive")
-    else:
-        print("negative")
-
-inser_own_input()
+net = network(data.X_train, data.y_train, data.list_of_words)
+net.train(data.X_val, data.y_val, 256, 6)
+net.evaluate(data.X_test, data.y_test)
