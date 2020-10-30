@@ -84,8 +84,11 @@ class text_preprocessing:
         sns.distplot(self.len_of_review, axlabel='Length of sentence', kde=True, hist=True, ax=ax2)
         plt.show()
 
-    def text_padding(self, arg):
-        self.seq_len = int(input("Set the length of reviews.\nAll sentences are going to be trim/pad to set value\n: "))
+    def text_padding(self, arg, seq_len=False):
+        if seq_len==False:
+            self.seq_len = int(input("Set the length of reviews.\nAll sentences are going to be trim/pad to set value\n: "))
+        else:
+            self.seq_len = seq_len
         self.reviews_with_padding = np.array(np.zeros(len(arg)*self.seq_len))
         self.reviews_with_padding = self.reviews_with_padding.reshape(len(arg), self.seq_len)
 
@@ -166,3 +169,32 @@ class network:
 net = network(data.X_train, data.y_train, data.list_of_words)
 net.train(data.X_val, data.y_val, 256, 6)
 net.evaluate(data.X_test, data.y_test)
+
+class custom_input:
+
+    def __init__(self):
+        self.input = [input("write a sentence")]
+
+    def preprocess_input(self, arg):
+        text_preprocessing.text_cleaning(self, arg)
+        self.clean_input = self.reviews
+
+    def input_padding(self, arg, seq_len):
+        text_preprocessing.text_padding(self, arg, seq_len)
+
+    def predict_sentiment(self, arg):
+        self.prediction = net.model_with_gru.predict(arg)
+        if self.prediction > 0.5:
+            print("\n\nSentiment: Positive")
+        else:
+            print("\n\nSentiment: Negative")
+
+
+def execute():
+    own_input = custom_input()
+    own_input.preprocess_input(own_input.input)
+    own_input.input_padding(own_input.clean_input, data.seq_len)
+    own_input.predict_sentiment(own_input.reviews_with_padding)
+
+
+execute()
