@@ -10,6 +10,7 @@ import tensorflow as tf
 import keras
 
 
+
 tweets = pd.read_csv(r"files\Tweets.csv", usecols=['tweet_id', 'airline_sentiment', 'text'])
 tweets = tweets[tweets.airline_sentiment != 'neutral']
 tweets.reset_index(inplace=True)
@@ -220,3 +221,11 @@ def execute():
     own_input.predict_sentiment(own_input.reviews_with_padding)
 
 execute()
+
+import pickle
+
+def save_obj(obj, name):
+    with open('files/'+ name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+save_obj(data.dictio, 'dictio')
