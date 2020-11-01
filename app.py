@@ -67,6 +67,38 @@ class App(Frame):
             self.reviews_with_padding = np.array(np.zeros(len(self.reviews)*self.seq_len))
             self.reviews_with_padding = self.reviews_with_padding.reshape(len(self.reviews), self.seq_len)
 
+            for review in self.reviews:
+                i=0
+                missing_words = []
+                for word in review.split():
+                    if word not in self.dictio:
+                        missing_words.append(word)
+                        self.dictio[word] = self.dictio[list(self.dictio.keys())[50+i]]
+                        del self.dictio[list(self.dictio.keys())[50+i]]
+                        i += 1
+
+                if i != 0:
+                    missing_words_string = ' '.join([word for word in missing_words])
+                    if len(missing_words) == 1:
+                        verb = "does"
+                        noun = "The word"
+                    else:
+                        verb = "do"
+                        noun = "Words"
+
+                    error_msg = "Warning!\n\n" + noun + " " + str(missing_words_string.split()) + " " + verb + " not exist in our dicionary.\nThey have been additionally added, but the prediction might be less accurate.\n\nClick to close the window."
+                    self.error_window = Toplevel(self.root)
+                    self.error_window.title("Error Message")
+                    self.error_window.geometry("730x162")
+
+                    def destroy():
+                        self.error_window.destroy()
+
+                    self.new_button = Button(self.error_window, text=error_msg, bg='#ad3440', font=('Arial', 16), command=destroy)
+                    self.new_button.grid(row=0,column=0)
+
+
+
             for idx, review in enumerate(self.reviews):
                 length = len([word for word in review.split()])
                 if length < self.seq_len:
