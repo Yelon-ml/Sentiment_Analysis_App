@@ -1,6 +1,6 @@
 # Sentiment Analysis App
 
-In this project I have written a recurrent neural network, that was training to the classification task. Training data set contains tweets that recomment or not chosen airlines (they are feedbacks from the journey).
+In this project I have written a recurrent neural network, that was training to the classification task. Training data set contains tweets that recommend (or not) chosen airlines (they are feedbacks from the journey).
 
 Data set has been preprocessed by deleting special characters, common english words, punctuation, terms around airline names; converting capital letters to lower ones; converting all terms to their root form (lemmatization technique).
 Model is able to return distribution of sentences's length - then one can choose optimal length and all reviews are padded/trimmed to be of set length. I choose seq_len = 16.
