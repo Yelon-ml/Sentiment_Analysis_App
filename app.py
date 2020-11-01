@@ -86,7 +86,7 @@ class App(Frame):
                         verb = "do"
                         noun = "Words"
 
-                    error_msg = "Warning!\n\n" + noun + " " + str(missing_words_string.split()) + " " + verb + " not exist in our dicionary.\nThey have been additionally added, but the prediction might be less accurate.\n\nClick to close the window."
+                    error_msg = "Warning!\n\n" + noun + " " + str(missing_words_string.split()) + " " + verb + " not exist in our dictionary.\nThey have been additionally added, but the prediction might be less accurate.\n\nClick to close the window."
                     self.error_window = Toplevel(self.root)
                     self.error_window.title("Error Message")
                     self.error_window.geometry("730x162")
