@@ -17,6 +17,6 @@ In case of input, that contains any strange words (that is not included in initi
 
 Below some screens:
 
-![App screen1](https://github.com/Yelon-ml/Sentiment_Analysis_App/blob/main/pics/pos.png)
-![App screen2](https://github.com/Yelon-ml/Sentiment_Analysis_App/blob/main/pics/neg.png)
-![App screen3](https://github.com/Yelon-ml/Sentiment_Analysis_App/blob/main/pics/error.png)
+![App screen1](https://github.com/Yelon-ml/Sentiment_Analysis_App/blob/main/pics/pos.PNG)
+![App screen2](https://github.com/Yelon-ml/Sentiment_Analysis_App/blob/main/pics/neg.PNG)
+![App screen3](https://github.com/Yelon-ml/Sentiment_Analysis_App/blob/main/pics/error.PNG)
